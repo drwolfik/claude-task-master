@@ -209,16 +209,18 @@ const INITIAL_RETRY_DELAY_MS = 1000;
 // Helper function to check if an error is retryable
 function isRetryableError(error) {
 	const errorMessage = error.message?.toLowerCase() || '';
-	
+
 	// Check for Claude Code CLI specific errors that should not be retried
-	if (errorMessage.includes('raw mode is not supported') ||
+	if (
+		errorMessage.includes('raw mode is not supported') ||
 		errorMessage.includes('ink') ||
 		errorMessage.includes('claude code process exited with code 143') ||
 		errorMessage.includes('authentication failed') ||
-		errorMessage.includes('not logged in')) {
+		errorMessage.includes('not logged in')
+	) {
 		return false;
 	}
-	
+
 	return (
 		errorMessage.includes('rate limit') ||
 		errorMessage.includes('overloaded') ||
@@ -269,10 +271,10 @@ function _extractClaudeCodeErrorMessage(error) {
 				// Clean up stderr and extract meaningful information
 				const cleanStderr = stderr
 					.split('\n')
-					.map(line => line.trim())
-					.filter(line => line && !line.startsWith('Error: Error:')) // Remove duplicate "Error:" prefixes
+					.map((line) => line.trim())
+					.filter((line) => line && !line.startsWith('Error: Error:')) // Remove duplicate "Error:" prefixes
 					.join('\n');
-				
+
 				if (cleanStderr) {
 					details.push(`Details: ${cleanStderr}`);
 				}
@@ -289,8 +291,10 @@ function _extractClaudeCodeErrorMessage(error) {
 			switch (exitCode) {
 				case 1:
 					message += ': General error occurred';
-					if (!details.some(d => d.includes('Details:'))) {
-						details.push('Details: Check if Claude Code CLI is properly installed and authenticated');
+					if (!details.some((d) => d.includes('Details:'))) {
+						details.push(
+							'Details: Check if Claude Code CLI is properly installed and authenticated'
+						);
 					}
 					break;
 				case 401:
@@ -311,7 +315,9 @@ function _extractClaudeCodeErrorMessage(error) {
 					break;
 				case 143:
 					message += ': Process interrupted (Ink interface error)';
-					details.push('Solution: Use PowerShell instead of Git Bash or set FORCE_COLOR=0 CI=true');
+					details.push(
+						'Solution: Use PowerShell instead of Git Bash or set FORCE_COLOR=0 CI=true'
+					);
 					break;
 				default:
 					message += `: Process exited with code ${exitCode}`;
@@ -339,16 +345,20 @@ function _extractClaudeCodeErrorMessage(error) {
 function _extractErrorMessage(error) {
 	try {
 		// Special handling for Claude Code CLI errors with detailed error information
-		if (error?.message && error.message.includes('Claude Code process exited with code')) {
+		if (
+			error?.message &&
+			error.message.includes('Claude Code process exited with code')
+		) {
 			return _extractClaudeCodeErrorMessage(error);
 		}
 
 		// Special handling for Claude Code CLI Ink errors
-		if (error?.message && (
-			error.message.includes('Raw mode is not supported') ||
-			error.message.includes('Ink') ||
-			error.message.includes('Claude Code process exited with code 143')
-		)) {
+		if (
+			error?.message &&
+			(error.message.includes('Raw mode is not supported') ||
+				error.message.includes('Ink') ||
+				error.message.includes('Claude Code process exited with code 143'))
+		) {
 			return `Claude Code CLI error: ${error.message}. This is a known issue on Windows with Git Bash. Please try using PowerShell or set environment variables FORCE_COLOR=0 CI=true.`;
 		}
 
@@ -545,10 +555,15 @@ async function _attemptProviderCallWithRetries(
 			);
 
 			// Enhanced error handling for specific error types
-			if (cleanMessage.includes('Raw mode is not supported') ||
+			if (
+				cleanMessage.includes('Raw mode is not supported') ||
 				cleanMessage.includes('Ink') ||
-				cleanMessage.includes('Claude Code process exited with code 143')) {
-				log('error', `[Claude Code CLI Error] Non-retryable error detected: ${cleanMessage}`);
+				cleanMessage.includes('Claude Code process exited with code 143')
+			) {
+				log(
+					'error',
+					`[Claude Code CLI Error] Non-retryable error detected: ${cleanMessage}`
+				);
 				throw error; // Don't retry Claude Code CLI errors
 			}
 
@@ -847,13 +862,13 @@ async function _unifiedServiceRunner(serviceType, params) {
 			};
 		} catch (error) {
 			const cleanMessage = _extractErrorMessage(error);
-			
+
 			// Enhanced error logging with more context
 			log(
 				'error',
 				`Service call failed for role ${currentRole} (Provider: ${providerName || 'unknown'}, Model: ${modelId || 'unknown'}): ${cleanMessage}`
 			);
-			
+
 			// Log additional error details for debugging
 			if (getDebugFlag()) {
 				log('debug', `Error details:`, {
@@ -865,45 +880,75 @@ async function _unifiedServiceRunner(serviceType, params) {
 					currentRole
 				});
 			}
-			
+
 			lastError = error;
 			lastCleanErrorMessage = cleanMessage;
 
 			// Handle Claude Code CLI specific errors with enhanced logging
 			if (providerName?.toLowerCase() === 'claude-code') {
-				if (cleanMessage.includes('Raw mode is not supported') ||
+				if (
+					cleanMessage.includes('Raw mode is not supported') ||
 					cleanMessage.includes('Ink') ||
-					cleanMessage.includes('Claude Code process exited with code 143')) {
-					log('warn', `[Claude Code CLI Error] Detected Ink interface error. This is a known issue on Windows with Git Bash.`);
-					log('info', `[Claude Code CLI Error] Solutions: 1) Use PowerShell instead of Git Bash, 2) Set FORCE_COLOR=0 CI=true environment variables`);
-				} else if (cleanMessage.includes('Claude Code process exited with code')) {
+					cleanMessage.includes('Claude Code process exited with code 143')
+				) {
+					log(
+						'warn',
+						`[Claude Code CLI Error] Detected Ink interface error. This is a known issue on Windows with Git Bash.`
+					);
+					log(
+						'info',
+						`[Claude Code CLI Error] Solutions: 1) Use PowerShell instead of Git Bash, 2) Set FORCE_COLOR=0 CI=true environment variables`
+					);
+				} else if (
+					cleanMessage.includes('Claude Code process exited with code')
+				) {
 					// Log detailed Claude Code API error information
 					log('error', `[Claude Code API Error] ${cleanMessage}`);
-					
+
 					// Log additional debugging information if available
 					if (error?.data?.stderr) {
-						log('debug', `[Claude Code API Error] Raw stderr: ${error.data.stderr}`);
+						log(
+							'debug',
+							`[Claude Code API Error] Raw stderr: ${error.data.stderr}`
+						);
 					}
 					if (error?.data?.exitCode) {
-						log('debug', `[Claude Code API Error] Exit code: ${error.data.exitCode}`);
+						log(
+							'debug',
+							`[Claude Code API Error] Exit code: ${error.data.exitCode}`
+						);
 					}
 					if (error?.data?.code) {
-						log('debug', `[Claude Code API Error] Error code: ${error.data.code}`);
+						log(
+							'debug',
+							`[Claude Code API Error] Error code: ${error.data.code}`
+						);
 					}
 				}
 			}
 
 			// Handle instanceof errors
 			if (isInstanceofError(error)) {
-				log('error', `[Instanceof Error] Detected type checking error in provider '${providerName}'. This may indicate a module loading issue.`);
-				log('info', `[Instanceof Error] Check if all required modules are properly imported and initialized.`);
+				log(
+					'error',
+					`[Instanceof Error] Detected type checking error in provider '${providerName}'. This may indicate a module loading issue.`
+				);
+				log(
+					'info',
+					`[Instanceof Error] Check if all required modules are properly imported and initialized.`
+				);
 			}
 
 			// Handle authentication errors
-			if (cleanMessage.toLowerCase().includes('authentication') ||
+			if (
+				cleanMessage.toLowerCase().includes('authentication') ||
 				cleanMessage.toLowerCase().includes('not logged in') ||
-				cleanMessage.toLowerCase().includes('api key')) {
-				log('error', `[Authentication Error] Provider '${providerName}' authentication failed. Please check your API key configuration.`);
+				cleanMessage.toLowerCase().includes('api key')
+			) {
+				log(
+					'error',
+					`[Authentication Error] Provider '${providerName}' authentication failed. Please check your API key configuration.`
+				);
 			}
 
 			if (serviceType === 'generateObject') {

@@ -168,7 +168,12 @@ function addShellAliases() {
 		} else if (process.env.ComSpec.includes('powershell')) {
 			shellType = 'powershell';
 			shellName = 'PowerShell';
-			shellConfigFile = path.join(homeDir, 'Documents', 'WindowsPowerShell', 'Microsoft.PowerShell_profile.ps1');
+			shellConfigFile = path.join(
+				homeDir,
+				'Documents',
+				'WindowsPowerShell',
+				'Microsoft.PowerShell_profile.ps1'
+			);
 		}
 	}
 
@@ -204,8 +209,14 @@ function addShellAliases() {
 
 	if (shellType === 'unknown') {
 		log('warn', 'Could not determine shell type. Aliases not added.');
-		log('info', 'Supported shells: Bash, Zsh, Git Bash, PowerShell, Command Prompt');
-		log('info', 'You can manually add aliases to your shell configuration file.');
+		log(
+			'info',
+			'Supported shells: Bash, Zsh, Git Bash, PowerShell, Command Prompt'
+		);
+		log(
+			'info',
+			'You can manually add aliases to your shell configuration file.'
+		);
 		return false;
 	}
 
@@ -253,7 +264,10 @@ alias taskmaster='task-master'
 
 		fs.appendFileSync(configFile, aliasBlock);
 		log('success', `Added Task Master aliases to ${configFile}`);
-		log('info', `To use the aliases in your current terminal, run: source ${configFile}`);
+		log(
+			'info',
+			`To use the aliases in your current terminal, run: source ${configFile}`
+		);
 
 		return true;
 	} catch (error) {
@@ -277,7 +291,7 @@ function handlePowerShell(configFile, homeDir) {
 			configContent = fs.readFileSync(configFile, 'utf8');
 		}
 
-		if (configContent.includes("Set-Alias tm task-master")) {
+		if (configContent.includes('Set-Alias tm task-master')) {
 			log('info', 'Task Master aliases already exist in PowerShell profile.');
 			return true;
 		}
@@ -290,8 +304,14 @@ Set-Alias taskmaster task-master
 `;
 
 		fs.appendFileSync(configFile, aliasBlock);
-		log('success', `Added Task Master aliases to PowerShell profile: ${configFile}`);
-		log('info', 'To use the aliases in your current PowerShell session, run: . $PROFILE');
+		log(
+			'success',
+			`Added Task Master aliases to PowerShell profile: ${configFile}`
+		);
+		log(
+			'info',
+			'To use the aliases in your current PowerShell session, run: . $PROFILE'
+		);
 
 		return true;
 	} catch (error) {
@@ -309,7 +329,7 @@ function handleCmd(configFile, homeDir) {
 			configContent = fs.readFileSync(configFile, 'utf8');
 		}
 
-		if (configContent.includes("doskey tm=task-master")) {
+		if (configContent.includes('doskey tm=task-master')) {
 			log('info', 'Task Master aliases already exist in CMD config.');
 			return true;
 		}
@@ -323,7 +343,10 @@ doskey taskmaster=task-master $*
 
 		fs.appendFileSync(configFile, aliasBlock);
 		log('success', `Added Task Master aliases to CMD config: ${configFile}`);
-		log('info', `To use the aliases in your current CMD session, run: call ${configFile}`);
+		log(
+			'info',
+			`To use the aliases in your current CMD session, run: call ${configFile}`
+		);
 
 		return true;
 	} catch (error) {

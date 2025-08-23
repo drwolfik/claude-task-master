@@ -326,11 +326,9 @@ async function updateSubtaskById(
 		}
 
 		if (outputFormat === 'text' && getDebugFlag(session)) {
-		
 		}
 		writeJSON(tasksPath, data, projectRoot, tag);
 		if (outputFormat === 'text' && getDebugFlag(session)) {
-	
 		}
 
 		report('success', `Successfully updated subtask ${subtaskId}`);
